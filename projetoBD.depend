@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1692281731 source:c:\users\honorio.filho\documents\projetos\projetobd\projetobd\main.c
+	<stdio.h>
+	<stdlib.h>
+	<locale.h>
+	<string.h>
+	<time.h>
+
