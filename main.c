@@ -88,7 +88,7 @@ int menu_principal()
     printf("  R - Visualizar contato\n");
     printf("  U - Atualizar contato\n");
     printf("  D - Apagar contato\n");
-    printf("  F - Sair\n");
+    printf("  S - Sair\n");
     printf("  ----------------------\n");
     printf("\n  Escolha uma opção: ");
 }
@@ -119,7 +119,7 @@ int main()
 
         system("cls || clear");
 
-        if (op1 == 'f' || op1 == 'F')
+        if (op1 == 's' || op1 == 'S')
         {
             printf("\n  ** Fim do aplicativo **");
             sleep(1);
@@ -163,7 +163,7 @@ int main()
 
                 listarContatos(arquivo);
 
-                printf("\nDigite o número do contato que deseja atualizar: ");
+                printf("\nDigite o índice do contato que deseja atualizar: ");
                 scanf("%d", &posicao);
                 posicao--; // Ajuste para índice (considerando que a lista é exibida a partir de 1)
 
@@ -195,23 +195,23 @@ int main()
                 fclose(arquivo);
                 break;
             case 'D':
-			    arquivo = fopen("agenda.dat", "rb+");
-			    printf("\n%s", lin_sim);
-			    printc("Apagar contato", 66);
-			    printf("\n%s\n", lin_sim);
-			    
-			    listarContatos(arquivo);
-
-			    printf("Digite o número do contato que deseja excluir: ");
-			    scanf("%d", &posicao);
-			    posicao--; // Ajuste para índice (considerando que a lista é exibida a partir de 1)
-
-			    rewind(arquivo); // Reposiciona o cursor para o início do arquivo
-			    excluirContato(arquivo, posicao);
-
-			    printf("\nContato excluído com sucesso!\n");
-
-			    fclose(arquivo);
+		arquivo = fopen("agenda.dat", "rb+");
+		printf("\n%s", lin_sim);
+		printc("Apagar contato", 66);
+		printf("\n%s\n", lin_sim);
+		
+		listarContatos(arquivo);
+		
+		printf("\nDigite o índice do contato que deseja excluir: ");
+		scanf("%d", &posicao);
+		posicao--; // Ajuste para índice (considerando que a lista é exibida a partir de 1)
+		
+		rewind(arquivo); // Reposiciona o cursor para o início do arquivo
+		excluirContato(arquivo, posicao);
+		
+		printf("\nContato excluído com sucesso!\n");
+		
+		fclose(arquivo);
                 break;
             default:
                 printf("Digite uma opção valida\n");
@@ -220,4 +220,3 @@ int main()
 
     return 0;
 }
-
