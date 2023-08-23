@@ -7,107 +7,56 @@
 #define TRUE 1
 #define FALSE 0
 
+char lin_dup[70] = "==================================================================\n";
+char lin_sim[70] = "------------------------------------------------------------------\n";
+
 typedef struct {
     char nome[50];
     char telefone[20];
     char email[50];
+    int excluido;
 } Contato;
 
-// Função para adicionar um novo contato
+// FunÃ§Ã£o para adicionar um novo contato
 void adicionarContato(FILE *arquivo, const Contato *contato) {
     fwrite(contato, sizeof(Contato), 1, arquivo);
     fflush(arquivo); // Certifica-se de que os dados sejam gravados no arquivo imediatamente
 }
 
-// Função para listar todos os contatos
+// FunÃ§Ã£o para listar todos os contatos
 void listarContatos(FILE *arquivo) {
     Contato contato;
-    rewind(arquivo); // Volta para o início do arquivo antes de ler
+    int contador = 0;
+    rewind(arquivo); // Volta para o inÃ­cio do arquivo antes de ler
+    printf("Indice\tNome\tTelefone\tEmail\n");
+    printf("---------------------------------------------\n");
     while (fread(&contato, sizeof(Contato), 1, arquivo) == 1) {
-        printf("Nome: %s\nTelefone: %s\nEmail: %s\n\n", contato.nome, contato.telefone, contato.email);
-    }
-}
-
-int buscarContato(FILE *arquivo, const char *nomeBusca) {
-    Contato contato;
-    while (fread(&contato, sizeof(Contato), 1, arquivo) == 1) {
-        if (strcmp(contato.nome, nomeBusca) == 0) {
-            return 1; // Contato encontrado
+        contador++;
+        if(contato.excluido == 0){
+            printf("%d\t%s\t%s\t%s\n", contador, contato.nome, contato.telefone, contato.email);
         }
     }
-    return 0; // Contato não encontrado
 }
 
-void atualizarContato(FILE *arquivo, const char *nomeBusca, const Contato *novoContato) {
+void atualizarContato(Contato *contato, const char *novoNome, const char *novoTelefone, const char *novoEmail) {
+    strcpy(contato->nome, novoNome);
+    strcpy(contato->telefone, novoTelefone);
+    strcpy(contato->email, novoEmail);
+}
+
+
+void excluirContato(FILE *arquivo, int posicao) {
     Contato contato;
-    long posicao = 0;
-    int encontrado = 0; // Flag para indicar se o contato foi encontrado
+    fseek(arquivo, posicao * sizeof(Contato), SEEK_SET);
+    fread(&contato, sizeof(Contato), 1, arquivo);
 
-    while (fread(&contato, sizeof(Contato), 1, arquivo) == 1) {
-        if (strcmp(contato.nome, nomeBusca) == 0) {
-            encontrado = 1; // Marca como encontrado
-            printf("\nContato encontrado:\n");
-            printf("Nome: %s\n", contato.nome);
-            printf("Telefone: %s\n", contato.telefone);
-            printf("Email: %s\n", contato.email);
+    // Marcar o contato como excluÃ­do
+    contato.excluido = 1;
 
-            char opcao;
-            printf("Deseja alterar este contato? (s/n): ");
-            scanf(" %c", &opcao);
-
-            if (opcao == 's' || opcao == 'S') {
-                printf("Novo nome: ");
-                scanf("%s", novoContato->nome);
-                printf("Novo telefone: ");
-                scanf("%s", novoContato->telefone);
-                printf("Novo email: ");
-                scanf("%s", novoContato->email);
-
-                // Move o cursor para a posição do contato a ser atualizado
-                fseek(arquivo, posicao * sizeof(Contato), SEEK_SET);
-                fwrite(novoContato, sizeof(Contato), 1, arquivo);
-
-                printf("Contato atualizado com sucesso.\n");
-            } else {
-                printf("Atualização cancelada.\n");
-            }
-
-            break; // Saímos do loop, pois o contato foi encontrado
-        }
-        posicao++; // Atualiza a posição
-    }
-
-    if (!encontrado) {
-        printf("\nContato não encontrado.\n");
-    }
+    fseek(arquivo, posicao * sizeof(Contato), SEEK_SET);
+    fwrite(&contato, sizeof(Contato), 1, arquivo);
+    fflush(arquivo);
 }
-
-
-// Função para deletar um contato
-void deletarContato(FILE *arquivo, const char *nomeBusca) {
-    Contato contato;
-    FILE *temp = tmpfile();
-
-    while (fread(&contato, sizeof(Contato), 1, arquivo) == 1) {
-        if (strcmp(contato.nome, nomeBusca) != 0) {
-            fwrite(&contato, sizeof(Contato), 1, temp);
-        }
-    }
-
-    rewind(temp);
-    fclose(arquivo);
-
-    arquivo = fopen("agenda.dat", "wb");
-    while (fread(&contato, sizeof(Contato), 1, temp) == 1) {
-        fwrite(&contato, sizeof(Contato), 1, arquivo);
-    }
-
-    fclose(temp);
-}
-
-char lin_dup[70] = "==================================================================\n";
-char lin_sim[70] = "------------------------------------------------------------------\n";
-
 
 void printc(char *s, int tam)
 {
@@ -133,7 +82,7 @@ void sleep(time_t delay)
 int menu_principal()
 {
     printf("\n%s", lin_dup);
-    printc("AGENDA TELEFÔNICA", 66);
+    printc("AGENDA TELEFÃ”NICA", 66);
     printf("\n%s\n", lin_dup);
     printf("  C - Adicionar contato\n");
     printf("  R - Visualizar contato\n");
@@ -141,7 +90,7 @@ int menu_principal()
     printf("  D - Apagar contato\n");
     printf("  F - Sair\n");
     printf("  ----------------------\n");
-    printf("\n  Escolha uma opção: ");
+    printf("\n  Escolha uma opÃ§Ã£o: ");
 }
 
 
@@ -149,9 +98,10 @@ int menu_principal()
 int main()
 {
     setlocale(LC_ALL, "Portuguese");
-    char op1, op2;
+    int posicao; // VariÃ¡vel para armazenar a posiÃ§Ã£o do contato a ser atualizado
+    char op1;
 
-    FILE *arquivo = fopen("agenda.dat", "ab+");
+    FILE *arquivo;
 
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo.\n");
@@ -178,6 +128,7 @@ int main()
         switch(toupper(op1))
         {
             case 'C':
+            	arquivo = fopen("agenda.dat", "ab+");
                 printf("\n%s", lin_sim);
                 printc("Adicionar contato", 66);
                 printf("\n%s\n", lin_sim);
@@ -188,36 +139,84 @@ int main()
                 scanf("%s", contato.telefone);
                 printf("Email: ");
                 scanf("%s", contato.email);
-                adicionarContato(arquivo, &contato);
+                contato.excluido = 0;
 
-                printf("\n\n");
+                adicionarContato(arquivo, &contato);
+                fclose(arquivo);
                 //sleep(5);
             break;
             case 'R':
+            	arquivo = fopen("agenda.dat", "r+");
                 printf("\n%s", lin_sim);
                 printc("Visualizar contato", 66);
                 printf("\n%s\n", lin_sim);
 
                 listarContatos(arquivo);
-
+                fclose(arquivo);
                 break;
 
             case 'U':
+            	arquivo = fopen("agenda.dat", "rb+");
                 printf("\n%s", lin_sim);
                 printc("Atualizar contato", 66);
                 printf("\n%s\n", lin_sim);
 
-                printf("Digite o nome do contato que deseja atualizar: ");
-                char nomeBusca[50];
-                scanf("%s", nomeBusca);
-                atualizarContato(arquivo, nomeBusca, &contato);
+                listarContatos(arquivo);
+
+                printf("\nDigite o nÃºmero do contato que deseja atualizar: ");
+                scanf("%d", &posicao);
+                posicao--; // Ajuste para Ã­ndice (considerando que a lista Ã© exibida a partir de 1)
+
+                fseek(arquivo, posicao * sizeof(Contato), SEEK_SET);
+                fread(&contato, sizeof(Contato), 1, arquivo);
+
+                printf("\nContato atual:\n");
+                printf("\n\tNome:%s\n\tTelefone: %s\n\tEmail: %s\n", contato.nome, contato.telefone, contato.email);
+
+                printf("\nDigite o novo nome: ");
+                char novoNome[50];
+                scanf("%s", novoNome);
+
+                printf("Digite o novo telefone: ");
+                char novoTelefone[20];
+                scanf("%s", novoTelefone);
+
+                printf("Digite o novo email: ");
+                char novoEmail[50];
+                scanf("%s", novoEmail);
+
+                atualizarContato(&contato, novoNome, novoTelefone, novoEmail);
+
+                fseek(arquivo, posicao * sizeof(Contato), SEEK_SET);
+                fwrite(&contato, sizeof(Contato), 1, arquivo);
+                fflush(arquivo);
+
+                printf("\nContato atualizado com sucesso!\n");
+                fclose(arquivo);
+                break;
+            case 'D':
+			    arquivo = fopen("agenda.dat", "rb+");
+			    printf("\n%s", lin_sim);
+			    printc("Apagar contato", 66);
+			    printf("\n%s\n", lin_sim);
+			    
+			    listarContatos(arquivo);
+
+			    printf("Digite o nÃºmero do contato que deseja excluir: ");
+			    scanf("%d", &posicao);
+			    posicao--; // Ajuste para Ã­ndice (considerando que a lista Ã© exibida a partir de 1)
+
+			    rewind(arquivo); // Reposiciona o cursor para o inÃ­cio do arquivo
+			    excluirContato(arquivo, posicao);
+
+			    printf("\nContato excluÃ­do com sucesso!\n");
+
+			    fclose(arquivo);
                 break;
             default:
-                printf("Digite uma opção valida\n");
+                printf("Digite uma opÃ§Ã£o valida\n");
         }
     } while(op1);
-
-    fclose(arquivo);
 
     return 0;
 }
